@@ -36,17 +36,16 @@ body a:hover{
 
 #map {
   height: 500px;
-  width: 1240px; 
+  width: 1240px;
   border-radius: 20px;
-  margin-bottom: 40px; 
+  margin: 0 auto; 
 }
 
 .head {
   background-color: #66A5AD;
   height: 135px;
   width: 1440px;
-  margin-top: 40px;
-  margin-bottom: 40px;
+  margin: 30px 0px 30px 0;
   border-radius: 20px;
   display: flex;
   justify-content: space-around; 
@@ -248,3 +247,84 @@ form button:hover {
   background-color: #003B46;
   color: white;
 }
+
+
+/*-----------------------------------*/
+
+/*----------------------*/
+
+/*----------------------*/
+
+.description {
+  background-color: #66A5AD;
+  width: 1440px;
+  margin: 30px 0px;
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-between; /* Расположить элементы по строке */
+  align-items: center;
+  padding: 15px;
+  flex-wrap: wrap; /* Позволяет полям переноситься на новую строку на маленьких экранах */
+}
+
+.description form {
+  display: flex;
+  flex-direction: row; /* Расположить элементы в строку */
+  justify-content: space-between; /* Равномерное распределение элементов */
+  width: 100%;
+  flex-wrap: wrap; /* Позволяет элементам переноситься на новую строку, если необходимо */
+}
+
+.description label {
+  font-weight: bold;
+  color: #003B46;
+  margin-right: 10px;
+  font-size: 14px; /* Чтобы текст не был слишком крупным */
+  display: flex;
+  align-items: center; /* Центрирование текста по вертикали */
+}
+
+.description input,
+.description textarea,
+.description select {
+  width: 180px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-family: inherit;
+  resize: none;
+  overflow-wrap: break-word;
+}
+
+.description textarea {
+  min-height: 20px;
+  max-height: 100px;
+}
+
+.description button {
+  background-color: #66A5AD;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-left: 10px;
+}
+
+.description button:hover {
+  background-color: #003B46;
+}
+
+
+.description .popup-form,
+.description .marker-popup {
+  width: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+
+
+
+

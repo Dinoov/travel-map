@@ -1,186 +1,135 @@
-// Ініціалізація мапи
-var map = L.map('map').setView([51.505, -0.09], 3);
+const map = L.map('map').setView([48.3794, 31.1656], 6); // Центр України
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    maxZoom: 18
 }).addTo(map);
 
-// Перевірки збережених маркерів у localStorage
-loadMarkers();
+let markers = [];
+let tempMarker = null;
 
-// Додавання маркеру на мапі
-map.on('click', function(e) {
-    var latitude = e.latlng.lat;
-    var longitude = e.latlng.lng;
-
-    var newMarker = L.marker([latitude, longitude]).addTo(map);
-
-    // Додаємо форму для запису про місце
-    var popupContent = `
-    <form class="popup-form" onsubmit="saveData(event, ${latitude}, ${longitude}, this, ${newMarker._leaflet_id})">
-        <label>Назва місця:</label><br>
-        <input type="text" name="placeName" placeholder="Назва"><br><br>
-        <label>Опис:</label><br>
-        <textarea name="placeDescription" placeholder="Опис"></textarea><br><br>
-        <button type="submit">Зберегти</button>
-    </form>`;
-
-    newMarker.bindPopup(popupContent).openPopup();
-});
-
-// Функція для береження міток у localStorage
-function saveData(event, latitude, longitude, form, markerId) {
-    event.preventDefault();
-
-    // Отримаємо дані з форми
-    var placeName = form.placeName.value;
-    var placeDescription = form.placeDescription.value;
-
-    // Створюємо об'єкт маркеру
-    var markerData = {
-        latitude: latitude,
-        longitude: longitude,
-        name: placeName,
-        description: placeDescription,
-        id: markerId
-    };
-
-    // Отримаємо поточні маркері з localStorage
-    var savedMarkers = JSON.parse(localStorage.getItem('markers')) || [];
-
-    // Додаємо нову мітку до списку
-    savedMarkers.push(markerData);
-
-    // Зберігаємо оновлені бармкери в localStorage
-    localStorage.setItem('markers', JSON.stringify(savedMarkers));
-
-    // Надаємо можливість мітці для редагування чи видалення
-    var marker = map._layers[markerId];
-    var popupContent = `
-    <div class="marker-popup">
-        <b>${placeName}</b><br>${placeDescription}<br>
-        <button onclick="deleteMarker(${markerId})">Видалити</button>
-        <button onclick="editMarker(${markerId})">Редагувати</button>
-    </div>
-    `;
-    marker.bindPopup(popupContent).openPopup();
-}
-
-// Функція для завантаження міток з localStorage
-function loadMarkers() {
-    var savedMarkers = JSON.parse(localStorage.getItem('markers')) || [];
-
-    savedMarkers.forEach(function(markerData) {
-        var marker = L.marker([markerData.latitude, markerData.longitude]).addTo(map);
-        var popupContent = `
-            <b>${markerData.name}</b><br>${markerData.description}<br>
-            <button onclick="deleteMarker(${marker._leaflet_id})">Видалити</button>
-            <button onclick="editMarker(${marker._leaflet_id})">Редагувати</button>
-        `;
-        marker.bindPopup(popupContent);
-
-        markerData.id = marker._leaflet_id;
-        localStorage.setItem('markers', JSON.stringify(savedMarkers));
-    });
-}
-
-// Функція для видалення маркера 
-function deleteMarker(markerId) {
-    var marker = map._layers[markerId];
-    if (marker) {
-        map.removeLayer(marker);
-    }
-
-    // Видаляемо маркер з localStorage
-    var savedMarkers = JSON.parse(localStorage.getItem('markers')) || [];
-    savedMarkers = savedMarkers.filter(function(markerData) {
-        return markerData.id !== markerId;
-    });
-
-    localStorage.setItem('markers', JSON.stringify(savedMarkers));
-}
-
-// Функція для оновлення даних мітки
-function editMarker(markerId) {
-    var marker = map._layers[markerId];
-    if (marker) {
-        var savedMarkers = JSON.parse(localStorage.getItem('markers')) || [];
-        var markerData = savedMarkers.find(function(marker) {
-            return marker.id === markerId;
-        });
-
-        var popupContent = `
-            <form class="popup-form" onsubmit="updateData(event, ${markerData.latitude}, ${markerData.longitude}, this, ${markerId})">
-                <label>Назва місця:</label><br>
-                <input type="text" name="placeName" value="${markerData.name}" placeholder="Назва"><br><br>
-                <label>Опис:</label><br>
-                <textarea name="placeDescription" placeholder="Описание">${markerData.description}</textarea><br><br>
-                <button type="submit">Оновити</button>
-            </form>`;
-
-        marker.bindPopup(popupContent).openPopup();
-    }
-}
-
-// Функція для оновлення даних в localStorage
-function updateData(event, latitude, longitude, form, markerId) {
-    event.preventDefault();
-
-    var placeName = form.placeName.value;
-    var placeDescription = form.placeDescription.value;
-
-    var savedMarkers = JSON.parse(localStorage.getItem('markers')) || [];
-
-    var markerDataIndex = savedMarkers.findIndex(function(marker) {
-        return marker.id === markerId;
-    });
-    if (markerDataIndex !== -1) {
-        savedMarkers[markerDataIndex].name = placeName;
-        savedMarkers[markerDataIndex].description = placeDescription;
-        localStorage.setItem('markers', JSON.stringify(savedMarkers));
-    }
-
-    var marker = map._layers[markerId];
-    var popupContent = `
+// Додати мітку до мапи
+function addMarkerToMap(lat, lng, title, description, category) {
+    const popupContent = `
         <div class="marker-popup">
-            <b>${placeName}</b><br>${placeDescription}<br>
-            <button onclick="deleteMarker(${markerId})">Видалити</button>
-            <button onclick="editMarker(${markerId})">Редагувати</button>
+            <b>${title}</b>
+            <p>${description}</p>
+            <p><i>Категорія: ${category}</i></p>
+            <button onclick="editMarker(${lat}, ${lng})">Оновити</button>
+            <button onclick="deleteSingleMarker(${lat}, ${lng})">Видалити</button>
         </div>
     `;
-    marker.bindPopup(popupContent).openPopup();
+    const marker = L.marker([lat, lng]).addTo(map).bindPopup(popupContent);
+    marker.meta = { lat, lng, title, description, category };
+    markers.push(marker);
 }
 
-document.querySelector("#clear").onclick = function() {
-    localStorage.clear();
-    map.eachLayer(function(layer) {
-        if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
+// Зберегти всі мітки
+function saveMarkersToLocalStorage() {
+    const data = markers.map(marker => marker.meta);
+    localStorage.setItem('travelMarkers', JSON.stringify(data));
+}
+
+// Видалення окремої мітки
+function deleteSingleMarker(lat, lng) {
+    markers = markers.filter(marker => {
+        const isSame = marker.meta.lat === lat && marker.meta.lng === lng;
+        if (isSame) {
+            map.removeLayer(marker);
         }
+        return !isSame;
     });
-};
-
-// Отримання елемента "Увійти" як кнопки для завантаження модульного вікна 
-var loginBtn = document.getElementById("loginBtn");
-var loginModal = document.getElementById("loginModal");
-var closeModal = document.getElementsByClassName("close")[0];
-
-loginBtn.onclick = function() {
-    loginModal.style.display = "block";
+    saveMarkersToLocalStorage();
 }
 
-// Закриття модульного вікна
-closeModal.onclick = function() {
-    loginModal.style.display = "none";
+// Редагування мітки
+function editMarker(lat, lng) {
+    const marker = markers.find(m => m.meta.lat === lat && m.meta.lng === lng);
+    if (!marker) return;
+
+    const form = document.getElementById('markerForm');
+    form.dataset.lat = lat;
+    form.dataset.lng = lng;
+    document.getElementById('title').value = marker.meta.title;
+    document.getElementById('description').value = marker.meta.description;
+    document.getElementById('category').value = marker.meta.category;
+
+    map.removeLayer(marker);
+    markers = markers.filter(m => m !== marker);
+    saveMarkersToLocalStorage();
 }
 
-// Закриття модульного вікна при натисканні за його межами
-window.onclick = function(event) {
-    if (event.target === loginModal) {
-        loginModal.style.display = "none";
+// Завантаження збережених міток
+if (localStorage.getItem('travelMarkers')) {
+    const savedMarkers = JSON.parse(localStorage.getItem('travelMarkers'));
+    savedMarkers.forEach(m => {
+        addMarkerToMap(m.lat, m.lng, m.title, m.description, m.category);
+    });
+}
+
+// Клік по карті — додається тимчасова мітка
+map.on('click', function (e) {
+    const { lat, lng } = e.latlng;
+
+    if (tempMarker) {
+        map.removeLayer(tempMarker);
+        tempMarker = null;
     }
-}
 
+    tempMarker = L.marker([lat, lng]).addTo(map).bindPopup("Заповніть форму").openPopup();
 
+    const form = document.getElementById('markerForm');
+    form.dataset.lat = lat;
+    form.dataset.lng = lng;
+});
 
+// Обробка форми
+document.getElementById('markerForm').addEventListener('submit', function (e) {
+    e.preventDefault();
 
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const category = document.getElementById('category').value;
+    const lat = parseFloat(this.dataset.lat);
+    const lng = parseFloat(this.dataset.lng);
+
+    if (!isNaN(lat) && !isNaN(lng)) {
+        if (tempMarker) {
+            map.removeLayer(tempMarker);
+            tempMarker = null;
+        }
+
+        addMarkerToMap(lat, lng, title, description, category);
+        saveMarkersToLocalStorage();
+
+        this.reset();
+        delete this.dataset.lat;
+        delete this.dataset.lng;
+    }
+});
+
+// Очистка форми
+document.getElementById('deleteBtn')?.addEventListener('click', () => {
+    const form = document.getElementById('markerForm');
+    form.reset();
+    delete form.dataset.lat;
+    delete form.dataset.lng;
+
+    if (tempMarker) {
+        map.removeLayer(tempMarker);
+        tempMarker = null;
+    }
+});
+
+// Видалити всі мітки
+document.getElementById('clear').addEventListener('click', function (e) {
+    e.preventDefault();
+
+    // Видалити всі маркери з карти
+    markers.forEach(marker => {
+        map.removeLayer(marker);
+    });
+
+    // Очистити масив та localStorage
+    markers = [];
+    localStorage.removeItem('travelMarkers');
+});
